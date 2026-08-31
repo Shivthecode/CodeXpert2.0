@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-zoom-blue: #0B5CFF;
+  --color-zoom-azure: #2D8CFF;
+  --color-zoom-tango: #F26D21;
+}
