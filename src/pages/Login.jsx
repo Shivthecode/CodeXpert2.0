@@ -16,7 +16,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Handle Real Google Login (Updated with Backend Connection)
+  // Handle Real Google Login (Updated with Production Backend API Connection)
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -27,8 +27,9 @@ const Login = () => {
 
         const { name, email } = res.data;
         
-        // 2. Apne Node.js Backend par data bhejna taaki real JWT token mil sake
-        const backendRes = await axios.post('http://localhost:5000/api/auth/google-login', { 
+        // 2. Apne backend par data bhejna (loginUser ya configured api service ka use karke)
+        // Yahan hum loginUser ki tarah api import ya dynamic baseURL use kar rahe hain
+        const backendRes = await loginUser.post('/auth/google-login', { 
           name, 
           email, 
           role: 'member' 
