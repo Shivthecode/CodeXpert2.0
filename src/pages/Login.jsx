@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { loginUser } from '../services/api';
+import { useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios'; 
 
 const Login = () => {
   const [step, setStep] = useState('login'); // 'login', 'forgot-email', 'forgot-otp', 'new-password'
@@ -13,25 +16,56 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Handle Google Login
-  const handleGoogleLogin = () => {
-    // Google se login hone par default 'member' role ya select karwaya ja sakta hai
-    login({ name: 'Google User', email: 'user@gmail.com', role: 'member' });
-    navigate('/dashboard');
-  };
+  // Handle Real Google Login (Updated with Backend Connection)
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // 1. Google ke API se user ki profile details nikalna
+        const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+
+        const { name, email } = res.data;
+        
+        // 2. Apne Node.js Backend par data bhejna taaki real JWT token mil sake
+        const backendRes = await axios.post('http://localhost:5000/api/auth/google-login', { 
+          name, 
+          email, 
+          role: 'member' 
+        });
+
+        // 3. Asli JWT Token aur User data save karna
+        localStorage.setItem('token', backendRes.data.token);
+        login(backendRes.data.user);
+        navigate('/dashboard');
+        
+      } catch (error) {
+        console.error('Google login backend fetch failed:', error);
+        setMessage('Google login failed. Please try again.');
+      }
+    },
+    onError: () => {
+      console.log('Login Failed');
+      setMessage('Google authentication was cancelled or failed.');
+    },
+  });
 
   // Handle Standard Login
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setMessage('Please fill in all fields.');
       return;
     }
     
-    // Context mein user data save karke dashboard bhej rahe hain
-    // (Email ke basis par role assign kar rahe hain, demo ke liye 'member')
-    login({ name: email.split('@')[0], email, role: 'member' });
-    navigate('/dashboard');
+    try {
+      const response = await loginUser({ email, password });
+      localStorage.setItem('token', response.data.token);
+      login(response.data.user);
+      navigate('/dashboard');
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Invalid email or password!");
+    }
   };
 
   // Step 1: Send OTP for Forgot Password
@@ -88,7 +122,7 @@ const Login = () => {
             {/* Google Login Button */}
             <button 
               type="button"
-              onClick={handleGoogleLogin}
+              onClick={() => googleLogin()} 
               className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-all shadow-sm mb-4"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">

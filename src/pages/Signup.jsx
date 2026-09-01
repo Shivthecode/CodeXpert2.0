@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { registerUser } from '../services/api';
+import { useGoogleLogin } from '@react-oauth/google'; 
+import axios from 'axios'; 
 
 const Signup = () => {
   const [role, setRole] = useState('member');
@@ -13,15 +16,42 @@ const Signup = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Handle Google Signup
-  const handleGoogleSignup = () => {
-    // Google signup ke baad user data set karke dashboard bhej rahe hain
-    login({ name: name || 'Google User', email: email || 'google@user.com', role });
-    navigate('/dashboard');
-  };
+  // Handle Real Google Signup (Updated with Backend Connection)
+  const googleSignup = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // 1. Google ke API se user ki profile details nikalna
+        const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
 
-  // Password Validation & Signup
-  const handleSignup = (e) => {
+        const { name, email } = res.data;
+        
+        // 2. Apne Node.js Backend par data aur selected 'role' bhejna
+        const backendRes = await axios.post('http://localhost:5000/api/auth/google-login', { 
+          name, 
+          email, 
+          role 
+        });
+
+        // 3. Asli JWT Token aur User data save karna
+        localStorage.setItem('token', backendRes.data.token);
+        login(backendRes.data.user);
+        navigate('/dashboard');
+        
+      } catch (err) {
+        console.error('Google signup backend fetch failed:', err);
+        setError('Google signup failed. Please try again.');
+      }
+    },
+    onError: () => {
+      console.log('Signup Failed');
+      setError('Google authentication was cancelled or failed.');
+    },
+  });
+
+  // Password Validation & Standard Signup
+  const handleSignup = async (e) => {
     e.preventDefault();
     
     // Check length (8 to 15 characters)
@@ -39,11 +69,13 @@ const Signup = () => {
 
     setError('');
     
-    // 1. Context mein user data save karo
-    login({ name, email, role });
-    
-    // 2. Direct Dashboard par redirect karo
-    navigate('/dashboard');
+    try {
+      const response = await registerUser({ name, email, password, role });
+      alert(response.data.message); 
+      navigate('/login'); 
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed! Please try again.");
+    }
   };
 
   return (
@@ -95,7 +127,7 @@ const Signup = () => {
           {/* Google Sign Up Button */}
           <button 
             type="button"
-            onClick={handleGoogleSignup}
+            onClick={() => googleSignup()}
             className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-all shadow-sm mt-1"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
