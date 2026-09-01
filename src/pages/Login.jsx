@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // useEffect import kiya
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../services/api';
@@ -12,13 +12,23 @@ const Login = () => {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false); // Added loading state for loader
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // 🔴 NAYA CODE: Agar user already logged in hai, toh turant dashboard bhej do
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   // Handle Real Google Login (Updated with Live Render Backend URL)
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      setLoading(true);
       try {
         // 1. Google ke API se user ki profile details nikalna
         const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -37,16 +47,21 @@ const Login = () => {
         // 3. Asli JWT Token aur User data save karna
         localStorage.setItem('token', backendRes.data.token);
         login(backendRes.data.user);
-        navigate('/dashboard');
+        
+        // 🔴 NAYA CODE: replace: true add kiya history clean rakhne ke liye
+        navigate('/dashboard', { replace: true });
         
       } catch (error) {
         console.error('Google login backend fetch failed:', error);
         setMessage('Google login failed. Please try again.');
+      } finally {
+        setLoading(false);
       }
     },
     onError: () => {
       console.log('Login Failed');
       setMessage('Google authentication was cancelled or failed.');
+      setLoading(false);
     },
   });
 
@@ -58,13 +73,19 @@ const Login = () => {
       return;
     }
     
+    setLoading(true);
     try {
       const response = await loginUser({ email, password });
       localStorage.setItem('token', response.data.token);
       login(response.data.user);
-      navigate('/dashboard');
+      
+      // 🔴 NAYA CODE: replace: true add kiya
+      navigate('/dashboard', { replace: true });
+      
     } catch (err) {
       setMessage(err.response?.data?.message || "Invalid email or password!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,14 +127,19 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-4">
-      <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md">
+    <div className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-4 py-12 relative overflow-hidden">
+      
+      {/* Background Decorative Glow Effects */}
+      <div className="absolute top-1/4 left-5 md:left-20 w-72 h-72 bg-[var(--color-zoom-blue)]/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-10 right-5 md:right-20 w-80 h-80 bg-[var(--color-zoom-azure)]/15 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md relative z-10">
         
         {/* 1. STANDARD LOGIN VIEW */}
         {step === 'login' && (
           <>
             <div className="text-center mb-6">
-              <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Welcome Back</h2>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">Welcome Back</h2>
               <p className="text-slate-500 text-sm">Log in to your CodeXpert account</p>
             </div>
 
@@ -122,8 +148,9 @@ const Login = () => {
             {/* Google Login Button */}
             <button 
               type="button"
-              onClick={() => googleLogin()} 
-              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-all shadow-sm mb-4"
+              onClick={() => { setLoading(true); googleLogin(); }} 
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-all shadow-sm mb-4 cursor-pointer disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -177,9 +204,20 @@ const Login = () => {
 
               <button 
                 type="submit" 
-                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-1"
+                disabled={loading}
+                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-1 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
               >
-                Log In
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Logging in...
+                  </>
+                ) : (
+                  "Log In"
+                )}
               </button>
             </form>
 
@@ -217,7 +255,7 @@ const Login = () => {
 
               <button 
                 type="submit" 
-                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md"
+                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Send OTP
               </button>
@@ -225,7 +263,7 @@ const Login = () => {
               <button 
                 type="button" 
                 onClick={() => setStep('login')} 
-                className="text-center text-sm text-slate-500 hover:text-slate-800 font-medium mt-2"
+                className="text-center text-sm text-slate-500 hover:text-slate-800 font-medium mt-2 cursor-pointer"
               >
                 Back to Login
               </button>
@@ -259,7 +297,7 @@ const Login = () => {
 
               <button 
                 type="submit" 
-                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md"
+                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Verify OTP
               </button>
@@ -292,7 +330,7 @@ const Login = () => {
 
               <button 
                 type="submit" 
-                className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md"
+                className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Update Password & Login
               </button>

@@ -10,9 +10,9 @@ const MemberNotices = ({ notices }) => {
   const visibleNotices = notices.filter(n => !readNoticeIds.includes(n.id));
 
   return (
-    <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm max-w-3xl">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-slate-900">Official Notice Board</h3>
+    <div className="bg-white p-4 sm:p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm max-w-3xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+        <h3 className="text-lg sm:text-xl font-bold text-slate-900">Official Notice Board</h3>
         
         {visibleNotices.length > 0 && (
           <span className="bg-blue-100 text-[var(--color-zoom-blue)] text-xs font-bold px-3 py-1 rounded-full">
@@ -22,20 +22,20 @@ const MemberNotices = ({ notices }) => {
       </div>
       
       {visibleNotices.length === 0 ? (
-        <div className="text-center py-10 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
-          <p className="text-slate-800 font-bold mb-1">All Caught Up</p>
-          <p className="text-slate-500 text-sm font-medium">You have no new notices to read.</p>
+        <div className="text-center py-8 sm:py-10 px-4 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
+          <p className="text-slate-800 font-bold mb-1 text-sm sm:text-base">All Caught Up</p>
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">You have no new notices to read.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {visibleNotices.map(n => (
-            <div key={n.id} className="p-5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 relative overflow-hidden transition-all duration-500">
+            <div key={n.id} className="p-4 sm:p-5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 relative overflow-hidden transition-all duration-500">
               
               {n.priority === 'Urgent' && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>}
               
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <h4 className="font-bold text-slate-900 text-lg leading-tight">{n.title}</h4>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-4">
+                <div className="flex-1 w-full">
+                  <h4 className="font-bold text-slate-900 text-base sm:text-lg leading-tight break-words">{n.title}</h4>
                   
                   <div className="flex flex-wrap gap-2 mt-2">
                     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md border ${n.priority === 'Urgent' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-blue-50 text-[var(--color-zoom-blue)] border-blue-200'}`}>
@@ -49,13 +49,13 @@ const MemberNotices = ({ notices }) => {
 
                 <button
                   onClick={() => handleMarkAsRead(n.id)}
-                  className="shrink-0 text-xs font-bold bg-white border border-slate-200 text-slate-600 px-3 py-2 rounded-xl hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm flex items-center gap-1.5"
+                  className="w-full sm:w-auto shrink-0 text-xs font-bold bg-white border border-slate-200 text-slate-600 px-4 py-2.5 sm:py-2 rounded-xl hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   Mark Read
                 </button>
               </div>
 
-              <p className="text-sm text-slate-700 mt-2 p-3.5 bg-white rounded-xl border border-slate-100 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-700 mt-2 p-3 sm:p-3.5 bg-white rounded-xl border border-slate-100 leading-relaxed break-words">
                 {n.content}
               </p>
             </div>

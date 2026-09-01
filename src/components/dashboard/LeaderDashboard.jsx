@@ -18,48 +18,46 @@ const LeaderDashboard = () => {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* Navigation Tabs */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap gap-2 items-center justify-between">
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveTab('teams')}
-            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === 'teams' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            My Teams
-          </button>
-          <button
-            onClick={() => setActiveTab('kanban')}
-            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === 'kanban' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Task Board (Kanban)
-          </button>
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === 'reports' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Work Report
-          </button>
-          <button
-            onClick={() => setActiveTab('notices')}
-            className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === 'notices' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Notice Board
-          </button>
-        </div>
+      {/* Navigation Tabs - Responsive Scroll/Grid Layout */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex flex-row gap-2 items-center overflow-x-auto scrollbar-none">
+        <button
+          onClick={() => setActiveTab('teams')}
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'teams' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          My Teams
+        </button>
+        <button
+          onClick={() => setActiveTab('kanban')}
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'kanban' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Task Board (Kanban)
+        </button>
+        <button
+          onClick={() => setActiveTab('reports')}
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'reports' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Work Report
+        </button>
+        <button
+          onClick={() => setActiveTab('notices')}
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'notices' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          Notice Board
+        </button>
       </div>
 
       {/* RENDER DYNAMIC COMPONENTS (Tumhari alag files yahan load hongi) */}
-      <div className="mt-6">
+      <div className="mt-6 w-full">
         {activeTab === 'teams' && <MyTeams teams={teams} setTeams={setTeams} />}
         {activeTab === 'kanban' && <TaskBoard tasks={tasks} setTasks={setTasks} teams={teams} />}
         {activeTab === 'reports' && <WorkReport tasks={tasks} />}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // useEffect import kiya hai
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { registerUser } from '../services/api';
@@ -12,13 +12,23 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // Added loading state for loader
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // 🔴 NAYA CODE: Agar user already logged in hai, toh turant dashboard bhej do
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   // Handle Real Google Signup (Updated with Live Render Backend URL)
   const googleSignup = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      setLoading(true);
       try {
         // 1. Google ke API se user ki profile details nikalna
         const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -37,16 +47,21 @@ const Signup = () => {
         // 3. Asli JWT Token aur User data save karna
         localStorage.setItem('token', backendRes.data.token);
         login(backendRes.data.user);
-        navigate('/dashboard');
+        
+        // 🔴 NAYA CODE: replace: true add kiya history clean rakhne ke liye
+        navigate('/dashboard', { replace: true });
         
       } catch (err) {
         console.error('Google signup backend fetch failed:', err);
         setError('Google signup failed. Please try again.');
+      } finally {
+        setLoading(false);
       }
     },
     onError: () => {
       console.log('Signup Failed');
       setError('Google authentication was cancelled or failed.');
+      setLoading(false);
     },
   });
 
@@ -68,22 +83,32 @@ const Signup = () => {
     }
 
     setError('');
+    setLoading(true);
     
     try {
       const response = await registerUser({ name, email, password, role });
       alert(response.data.message); 
-      navigate('/login'); 
+      
+      // 🔴 NAYA CODE: replace: true add kiya yaha bhi
+      navigate('/login', { replace: true }); 
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed! Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md">
+    <div className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-4 py-12 relative overflow-hidden">
+      
+      {/* Background Decorative Glow Effects */}
+      <div className="absolute top-1/4 left-5 md:left-20 w-72 h-72 bg-[var(--color-zoom-blue)]/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-10 right-5 md:right-20 w-80 h-80 bg-[var(--color-zoom-azure)]/15 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md relative z-10">
         
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Create Account</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">Create Account</h2>
           <p className="text-slate-500 text-sm">Start building with CodeXpert AI</p>
         </div>
 
@@ -102,7 +127,7 @@ const Signup = () => {
               <button
                 type="button"
                 onClick={() => setRole('leader')}
-                className={`py-2.5 px-4 rounded-xl font-semibold text-sm border transition-all ${
+                className={`py-2.5 px-4 rounded-xl font-semibold text-sm border transition-all cursor-pointer ${
                   role === 'leader'
                     ? 'bg-[var(--color-zoom-blue)] text-white border-[var(--color-zoom-blue)] shadow-md'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -113,7 +138,7 @@ const Signup = () => {
               <button
                 type="button"
                 onClick={() => setRole('member')}
-                className={`py-2.5 px-4 rounded-xl font-semibold text-sm border transition-all ${
+                className={`py-2.5 px-4 rounded-xl font-semibold text-sm border transition-all cursor-pointer ${
                   role === 'member'
                     ? 'bg-[var(--color-zoom-blue)] text-white border-[var(--color-zoom-blue)] shadow-md'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -127,8 +152,9 @@ const Signup = () => {
           {/* Google Sign Up Button */}
           <button 
             type="button"
-            onClick={() => googleSignup()}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-all shadow-sm mt-1"
+            onClick={() => { setLoading(true); googleSignup(); }}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-xl transition-all shadow-sm mt-1 cursor-pointer disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
@@ -188,7 +214,7 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-medium"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-medium cursor-pointer"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -199,9 +225,20 @@ const Signup = () => {
             {/* Signup Button */}
             <button 
               type="submit" 
-              className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-2"
+              disabled={loading}
+              className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-2 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
             >
-              Sign Up as {role === 'leader' ? 'Team Leader' : 'Team Member'}
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating Account...
+                </>
+              ) : (
+                `Sign Up as ${role === 'leader' ? 'Team Leader' : 'Team Member'}`
+              )}
             </button>
           </form>
 

@@ -42,13 +42,13 @@ const MemberDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* Navigation Tabs */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap gap-2 items-center">
+      {/* Navigation Tabs - Responsive Scroll/Grid Layout */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-100 shadow-sm flex flex-row gap-2 items-center overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab('team')}
-          className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'team' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -56,7 +56,7 @@ const MemberDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab('tasks')}
-          className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'tasks' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -64,16 +64,16 @@ const MemberDashboard = () => {
         </button>
         <button
           onClick={() => setActiveTab('notices')}
-          className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+          className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'notices' ? 'bg-[var(--color-zoom-blue)] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
-          📢 Notice Board
+           Notice Board
         </button>
       </div>
 
       {/* Tab Components Load */}
-      <div className="mt-6">
+      <div className="mt-6 w-full">
         {activeTab === 'team' && <MemberTeam team={teamData} />}
         {activeTab === 'tasks' && <MemberTasks tasks={tasks} updateTaskStatus={updateTaskStatus} />}
         {activeTab === 'notices' && <MemberNotices notices={notices} />}
