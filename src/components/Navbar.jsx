@@ -48,7 +48,7 @@ const Navbar = () => {
                 to="/dashboard" 
                 className="text-sm font-bold text-[var(--color-zoom-blue)] hover:underline"
               >
-                Go to Dashboard →
+                Dashboard
               </Link>
               
               <div className="relative">
