@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'; // useEffect import kiya hai
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react'; 
+import { Link, useNavigate, Navigate } from 'react-router-dom'; // 🔴 Navigate import kiya
 import { useAuth } from '../context/AuthContext';
 import { registerUser } from '../services/api';
 import { useGoogleLogin } from '@react-oauth/google'; 
@@ -12,43 +12,35 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // Added loading state for loader
+  const [loading, setLoading] = useState(false); 
 
-  const { login } = useAuth();
+  const { login, user } = useAuth(); // 🔴 user ko context se liya
   const navigate = useNavigate();
 
-  // 🔴 NAYA CODE: Agar user already logged in hai, toh turant dashboard bhej do
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate]);
+  // 🔴 ULTIMATE FIX: Agar user logged in hai, toh bina render kiye seedha bhej do
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-  // Handle Real Google Signup (Updated with Live Render Backend URL)
+  // Handle Real Google Signup
   const googleSignup = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setLoading(true);
       try {
-        // 1. Google ke API se user ki profile details nikalna
         const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
 
         const { name, email } = res.data;
         
-        // 2. Apne Live Render Backend par data aur selected 'role' bhejna
         const backendRes = await axios.post('https://codexpert2-backend.onrender.com/api/auth/google-login', { 
           name, 
           email, 
           role 
         });
 
-        // 3. Asli JWT Token aur User data save karna
         localStorage.setItem('token', backendRes.data.token);
         login(backendRes.data.user);
-        
-        // 🔴 NAYA CODE: replace: true add kiya history clean rakhne ke liye
         navigate('/dashboard', { replace: true });
         
       } catch (err) {
@@ -65,17 +57,14 @@ const Signup = () => {
     },
   });
 
-  // Password Validation & Standard Signup
   const handleSignup = async (e) => {
     e.preventDefault();
     
-    // Check length (8 to 15 characters)
     if (password.length < 8 || password.length > 15) {
       setError('Password must be between 8 and 15 characters long.');
       return;
     }
 
-    // Check special character
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     if (!hasSpecialChar) {
       setError('Password must include at least one special character.');
@@ -88,8 +77,6 @@ const Signup = () => {
     try {
       const response = await registerUser({ name, email, password, role });
       alert(response.data.message); 
-      
-      // 🔴 NAYA CODE: replace: true add kiya yaha bhi
       navigate('/login', { replace: true }); 
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed! Please try again.");
@@ -100,8 +87,6 @@ const Signup = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-4 py-12 relative overflow-hidden">
-      
-      {/* Background Decorative Glow Effects */}
       <div className="absolute top-1/4 left-5 md:left-20 w-72 h-72 bg-[var(--color-zoom-blue)]/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-10 right-5 md:right-20 w-80 h-80 bg-[var(--color-zoom-azure)]/15 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -120,7 +105,6 @@ const Signup = () => {
 
         <div className="flex flex-col gap-4">
           
-          {/* 1. Role Selection */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Select Your Role</label>
             <div className="grid grid-cols-2 gap-3">
@@ -149,7 +133,6 @@ const Signup = () => {
             </div>
           </div>
 
-          {/* Google Sign Up Button */}
           <button 
             type="button"
             onClick={() => { setLoading(true); googleSignup(); }}
@@ -165,7 +148,6 @@ const Signup = () => {
             Continue with Google
           </button>
 
-          {/* Divider */}
           <div className="flex items-center my-2">
             <div className="flex-grow border-t border-slate-200"></div>
             <span className="px-3 text-xs text-slate-400 uppercase tracking-wider font-medium">Or continue with email</span>
@@ -173,7 +155,6 @@ const Signup = () => {
           </div>
 
           <form onSubmit={handleSignup} className="flex flex-col gap-4">
-            {/* Email ID */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
               <input 
@@ -186,7 +167,6 @@ const Signup = () => {
               />
             </div>
 
-            {/* Name */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
               <input 
@@ -199,7 +179,6 @@ const Signup = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
               <div className="relative">
@@ -222,7 +201,6 @@ const Signup = () => {
               <p className="text-[11px] text-slate-400 mt-1">Must be 8-15 characters and contain a special character.</p>
             </div>
 
-            {/* Signup Button */}
             <button 
               type="submit" 
               disabled={loading}

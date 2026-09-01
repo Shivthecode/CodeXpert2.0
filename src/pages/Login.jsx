@@ -1,54 +1,46 @@
-import React, { useState, useEffect } from 'react'; // useEffect import kiya
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react'; 
+import { Link, useNavigate, Navigate } from 'react-router-dom'; // 🔴 Navigate import kiya
 import { useAuth } from '../context/AuthContext';
 import { loginUser } from '../services/api';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios'; 
 
 const Login = () => {
-  const [step, setStep] = useState('login'); // 'login', 'forgot-email', 'forgot-otp', 'new-password'
+  const [step, setStep] = useState('login'); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false); // Added loading state for loader
+  const [loading, setLoading] = useState(false); 
 
-  const { login } = useAuth();
+  const { login, user } = useAuth(); // 🔴 user ko context se liya
   const navigate = useNavigate();
 
-  // 🔴 NAYA CODE: Agar user already logged in hai, toh turant dashboard bhej do
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [navigate]);
+  // 🔴 ULTIMATE FIX: Agar user logged in hai, toh bina render kiye seedha bhej do
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-  // Handle Real Google Login (Updated with Live Render Backend URL)
+  // Handle Real Google Login
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setLoading(true);
       try {
-        // 1. Google ke API se user ki profile details nikalna
         const res = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         });
 
         const { name, email } = res.data;
         
-        // 2. Apne Live Render Backend par data bhejna
         const backendRes = await axios.post('https://codexpert2-backend.onrender.com/api/auth/google-login', { 
           name, 
           email, 
           role: 'member' 
         });
 
-        // 3. Asli JWT Token aur User data save karna
         localStorage.setItem('token', backendRes.data.token);
         login(backendRes.data.user);
-        
-        // 🔴 NAYA CODE: replace: true add kiya history clean rakhne ke liye
         navigate('/dashboard', { replace: true });
         
       } catch (error) {
@@ -78,8 +70,6 @@ const Login = () => {
       const response = await loginUser({ email, password });
       localStorage.setItem('token', response.data.token);
       login(response.data.user);
-      
-      // 🔴 NAYA CODE: replace: true add kiya
       navigate('/dashboard', { replace: true });
       
     } catch (err) {
@@ -89,7 +79,6 @@ const Login = () => {
     }
   };
 
-  // Step 1: Send OTP for Forgot Password
   const handleSendOtp = (e) => {
     e.preventDefault();
     if (!email) {
@@ -100,7 +89,6 @@ const Login = () => {
     setStep('forgot-otp');
   };
 
-  // Step 2: Verify OTP
   const handleVerifyOtp = (e) => {
     e.preventDefault();
     if (otp !== '1234') {
@@ -111,7 +99,6 @@ const Login = () => {
     setStep('new-password');
   };
 
-  // Step 3: Reset Password
   const handleResetPassword = (e) => {
     e.preventDefault();
     if (newPassword.length < 8) {
@@ -128,14 +115,11 @@ const Login = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center bg-slate-50 px-4 py-12 relative overflow-hidden">
-      
-      {/* Background Decorative Glow Effects */}
       <div className="absolute top-1/4 left-5 md:left-20 w-72 h-72 bg-[var(--color-zoom-blue)]/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-10 right-5 md:right-20 w-80 h-80 bg-[var(--color-zoom-azure)]/15 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md relative z-10">
         
-        {/* 1. STANDARD LOGIN VIEW */}
         {step === 'login' && (
           <>
             <div className="text-center mb-6">
@@ -145,7 +129,6 @@ const Login = () => {
 
             {message && <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl font-medium">{message}</div>}
 
-            {/* Google Login Button */}
             <button 
               type="button"
               onClick={() => { setLoading(true); googleLogin(); }} 
@@ -161,7 +144,6 @@ const Login = () => {
               Continue with Google
             </button>
 
-            {/* Divider */}
             <div className="flex items-center my-4">
               <div className="flex-grow border-t border-slate-200"></div>
               <span className="px-3 text-xs text-slate-400 uppercase tracking-wider font-medium">Or continue with email</span>
@@ -230,7 +212,6 @@ const Login = () => {
           </>
         )}
 
-        {/* 2. FORGOT PASSWORD - STEP 1: ENTER EMAIL */}
         {step === 'forgot-email' && (
           <>
             <div className="text-center mb-6">
@@ -271,7 +252,6 @@ const Login = () => {
           </>
         )}
 
-        {/* 3. FORGOT PASSWORD - STEP 2: ENTER OTP */}
         {step === 'forgot-otp' && (
           <>
             <div className="text-center mb-6">
@@ -305,7 +285,6 @@ const Login = () => {
           </>
         )}
 
-        {/* 4. FORGOT PASSWORD - STEP 3: NEW PASSWORD */}
         {step === 'new-password' && (
           <>
             <div className="text-center mb-6">
@@ -337,7 +316,6 @@ const Login = () => {
             </form>
           </>
         )}
-
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -21,14 +22,20 @@ const Hero = () => {
             Transform software development with codeXpert’s Agentic AI Platform...
           </p>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Replaced with Explore Features & Documentation */}
           <div className="flex flex-col sm:flex-row gap-4 mt-2 w-full sm:w-auto px-4 sm:px-0">
-            <button className="bg-white text-[var(--color-zoom-blue)] hover:bg-slate-100 font-bold px-8 py-3.5 rounded-xl transition-colors shadow-md w-full sm:w-auto cursor-pointer">
-              Create Free Account
-            </button>
-            <button className="border-2 border-white/80 text-white hover:bg-white/10 font-bold px-8 py-3.5 rounded-xl transition-all w-full sm:w-auto cursor-pointer">
-              Login
-            </button>
+            <Link 
+              to="/dashboard" 
+              className="bg-white text-[var(--color-zoom-blue)] hover:bg-slate-100 font-bold px-8 py-3.5 rounded-xl transition-colors shadow-md w-full sm:w-auto text-center cursor-pointer"
+            >
+              Explore Workspace
+            </Link>
+            <a 
+              href="#features" 
+              className="border-2 border-white/85 text-white hover:bg-white/10 font-bold px-8 py-3.5 rounded-xl transition-all w-full sm:w-auto text-center cursor-pointer"
+            >
+              View Documentation
+            </a>
           </div>
         </div>
 
