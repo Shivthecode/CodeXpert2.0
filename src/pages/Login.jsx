@@ -16,7 +16,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Handle Real Google Login (Updated with Production Backend API Connection)
+  // Handle Real Google Login (Updated with Live Render Backend URL)
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -27,9 +27,8 @@ const Login = () => {
 
         const { name, email } = res.data;
         
-        // 2. Apne backend par data bhejna (loginUser ya configured api service ka use karke)
-        // Yahan hum loginUser ki tarah api import ya dynamic baseURL use kar rahe hain
-        const backendRes = await loginUser.post('/auth/google-login', { 
+        // 2. Apne Live Render Backend par data bhejna
+        const backendRes = await axios.post('https://codexpert2-backend.onrender.com/api/auth/google-login', { 
           name, 
           email, 
           role: 'member' 

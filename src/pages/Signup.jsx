@@ -16,7 +16,7 @@ const Signup = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Handle Real Google Signup (Updated with Production Backend API Connection)
+  // Handle Real Google Signup (Updated with Live Render Backend URL)
   const googleSignup = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
@@ -27,8 +27,8 @@ const Signup = () => {
 
         const { name, email } = res.data;
         
-        // 2. Apne Node.js Backend par data aur selected 'role' bhejna (using registerUser / api base instance)
-        const backendRes = await registerUser.post('/auth/google-login', { 
+        // 2. Apne Live Render Backend par data aur selected 'role' bhejna
+        const backendRes = await axios.post('https://codexpert2-backend.onrender.com/api/auth/google-login', { 
           name, 
           email, 
           role 
