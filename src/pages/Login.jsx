@@ -1,7 +1,8 @@
 import React, { useState } from 'react'; 
-import { Link, useNavigate, Navigate } from 'react-router-dom'; // 🔴 Navigate import kiya
+import { Link, useNavigate, Navigate } from 'react-router-dom'; 
 import { useAuth } from '../context/AuthContext';
-import { loginUser } from '../services/api';
+// 🔴 NAYI APIs IMPORT KI HAIN YAHAN:
+import { loginUser, forgotPassword, verifyOtp, resetPassword } from '../services/api';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios'; 
 
@@ -14,10 +15,10 @@ const Login = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false); 
 
-  const { login, user } = useAuth(); // 🔴 user ko context se liya
+  const { login, user } = useAuth(); 
   const navigate = useNavigate();
 
-  // 🔴 ULTIMATE FIX: Agar user logged in hai, toh bina render kiye seedha bhej do
+  // Agar user logged in hai, toh bina render kiye seedha bhej do
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -79,38 +80,74 @@ const Login = () => {
     }
   };
 
-  const handleSendOtp = (e) => {
+  // ==========================================
+  // 🔴 ASLI FORGOT PASSWORD HANDLERS
+  // ==========================================
+
+  // Step 1: Send OTP
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!email) {
       setMessage('Please enter your email address.');
       return;
     }
-    setMessage(`OTP sent to ${email} (Demo OTP: 1234)`);
-    setStep('forgot-otp');
+    
+    setLoading(true);
+    setMessage('');
+    try {
+      await forgotPassword({ email }); // API Call
+      setMessage(`OTP has been sent to ${email}`);
+      setStep('forgot-otp');
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to send OTP.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOtp = (e) => {
+  // Step 2: Verify OTP
+  const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (otp !== '1234') {
-      setMessage('Invalid OTP. Please enter 1234.');
+    if (!otp) {
+      setMessage('Please enter the verification code.');
       return;
     }
+
+    setLoading(true);
     setMessage('');
-    setStep('new-password');
+    try {
+      await verifyOtp({ email, otp }); // API Call
+      setMessage('');
+      setStep('new-password');
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Invalid or expired OTP.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResetPassword = (e) => {
+  // Step 3: Reset Password
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     if (newPassword.length < 8) {
       setMessage('Password must be at least 8 characters long.');
       return;
     }
-    alert('Password updated successfully! Please login with your new password.');
-    setStep('login');
-    setNewPassword('');
-    setEmail('');
-    setPassword('');
+
+    setLoading(true);
     setMessage('');
+    try {
+      await resetPassword({ email, newPassword }); // API Call
+      alert('Password updated successfully! Please login with your new password.');
+      setStep('login');
+      setNewPassword('');
+      setOtp('');
+      setMessage('');
+    } catch (err) {
+      setMessage(err.response?.data?.message || "Failed to update password.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -236,9 +273,10 @@ const Login = () => {
 
               <button 
                 type="submit" 
-                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
+                disabled={loading}
+                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-70 flex justify-center items-center"
               >
-                Send OTP
+                {loading ? 'Sending OTP...' : 'Send OTP'}
               </button>
               
               <button 
@@ -263,23 +301,24 @@ const Login = () => {
 
             <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Verification Code (Try: 1234)</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Verification Code</label>
                 <input 
                   type="text" 
                   maxLength="4"
                   required
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="1234" 
+                  placeholder="e.g. 4821" 
                   className="w-full px-4 py-3 text-center tracking-widest text-lg font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-zoom-blue)]/50 bg-slate-50"
                 />
               </div>
 
               <button 
-                type="submit" 
-                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
+                type="submit"
+                disabled={loading} 
+                className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-70 flex justify-center items-center"
               >
-                Verify OTP
+                {loading ? 'Verifying...' : 'Verify OTP'}
               </button>
             </form>
           </>
@@ -309,9 +348,10 @@ const Login = () => {
 
               <button 
                 type="submit" 
-                className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
+                disabled={loading}
+                className="w-full bg-slate-900 hover:bg-black text-white font-bold py-3.5 rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-70 flex justify-center items-center"
               >
-                Update Password & Login
+                {loading ? 'Updating...' : 'Update Password & Login'}
               </button>
             </form>
           </>

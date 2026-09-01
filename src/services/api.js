@@ -14,3 +14,22 @@ export const registerUser = (userData) => {
 export const loginUser = (userData) => {
   return API.post('/auth/login', userData);
 };
+
+// ==========================================
+// 🔴 NAYE FUNCTIONS: FORGOT PASSWORD FLOW KE LIYE
+// ==========================================
+
+// 1. Email par OTP bhejne ke liye
+export const forgotPassword = (data) => {
+  return API.post('/auth/forgot-password', data);
+};
+
+// 2. User ne jo OTP dala hai use verify karne ke liye
+export const verifyOtp = (data) => {
+  return API.post('/auth/verify-otp', data);
+};
+
+// 3. Naya password set karne ke liye
+export const resetPassword = (data) => {
+  return API.post('/auth/reset-password', data);
+};
