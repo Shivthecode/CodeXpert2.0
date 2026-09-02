@@ -1,24 +1,118 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const DashboardNavbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // UI States
   const [showNotifications, setShowNotifications] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  // 🔴 Naye API States
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     logout(); 
-    // Isse forcefully Home Page par redirect hoga, chahe Protected Route kuch bhi kare
     window.location.href = '/'; 
   };
 
   const getInitials = (name) => {
     return name ? name.charAt(0).toUpperCase() : 'U';
+  };
+
+  // 🔴 1. Backend se Notifications Fetch Karna
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const response = await fetch('http://localhost:5000/api/teams/notifications', {
+        method: 'GET',
+        headers: { 'auth-token': token }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  // Jab navbar load ho tab API call karo
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  // 🔴 2. Invite Accept ya Reject Karna
+  const handleAction = async (notificationId, action) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/teams/respond-invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'auth-token': token
+        },
+        body: JSON.stringify({ notificationId, action })
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+        // List se action li gayi notification ko hata do
+        setNotifications(notifications.filter(n => n._id !== notificationId));
+        // Notification dropdown band kar do agar chaho toh:
+        // setShowNotifications(false); 
+      } else {
+        alert(data.message || "Action failed.");
+      }
+    } catch (error) {
+      console.error("Error in responding:", error);
+      alert("Server se connect nahi ho paya.");
+    }
+  };
+
+  // 🔴 3. Dropdown UI banane ka chota function (Kyunki Desktop/Mobile dono jagah lagana hai)
+  const renderNotificationContent = () => {
+    return (
+      <div className="space-y-3">
+        {notifications.length === 0 ? (
+          <div className="p-4 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p className="text-xs text-slate-500 font-medium">No new notifications.</p>
+          </div>
+        ) : (
+          notifications.map(notif => (
+            <div key={notif._id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
+              <p className="text-xs text-slate-700 leading-relaxed">
+                <span className="font-bold">{notif.sender?.name || 'Someone'}</span> invited you to team <span className="font-bold text-[var(--color-zoom-blue)]">"{notif.team?.name || 'Unknown'}"</span>
+              </p>
+              <div className="flex gap-2 mt-1">
+                <button 
+                  onClick={() => handleAction(notif._id, 'accepted')}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 rounded-lg text-[10px] transition-colors cursor-pointer shadow-sm"
+                >
+                  Accept
+                </button>
+                <button 
+                  onClick={() => handleAction(notif._id, 'rejected')}
+                  className="flex-1 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-bold py-1.5 rounded-lg text-[10px] transition-colors cursor-pointer"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
   };
 
   return (
@@ -60,27 +154,28 @@ const DashboardNavbar = () => {
             )}
           </div>
 
-          {/* 2. Notification Icon */}
+          {/* 2. Notification Icon (Desktop) */}
           <div className="relative">
             <button 
               onClick={() => { setShowNotifications(!showNotifications); setShowTools(false); setShowProfile(false); }}
               className="w-10 h-10 flex items-center justify-center bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 transition-colors relative shadow-sm cursor-pointer"
             >
               🔔
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              {/* 🔴 Dynamic Notification Badge */}
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                  {notifications.length}
+                </span>
+              )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Notifications</h4>
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                    New task assigned by team leader.
-                  </div>
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                    Code submission approved successfully.
-                  </div>
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-50 max-h-[400px] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Notifications</h4>
                 </div>
+                {/* 🔴 Yahan function call kiya jo notification list banayega */}
+                {renderNotificationContent()}
               </div>
             )}
           </div>
@@ -135,27 +230,28 @@ const DashboardNavbar = () => {
         {/* Mobile Right Icons & Hamburger Button */}
         <div className="md:hidden flex items-center gap-3">
           
-          {/* Notification for Mobile - FIXED RESPONSIVENESS */}
+          {/* Notification for Mobile */}
           <div className="relative">
             <button 
               onClick={() => { setShowNotifications(!showNotifications); setShowMobileMenu(false); }}
               className="w-9 h-9 flex items-center justify-center bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 relative shadow-sm cursor-pointer"
             >
               🔔
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              {/* 🔴 Dynamic Notification Badge for Mobile */}
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                  {notifications.length}
+                </span>
+              )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-[-10px] sm:right-0 mt-3 w-[280px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 origin-top-right">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Notifications</h4>
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                    New task assigned by team leader.
-                  </div>
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                    Code submission approved successfully.
-                  </div>
+              <div className="absolute right-[-10px] sm:right-0 mt-3 w-[280px] bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 origin-top-right max-h-[400px] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Notifications</h4>
                 </div>
+                {/* 🔴 Yahan bhi function call kiya */}
+                {renderNotificationContent()}
               </div>
             )}
           </div>

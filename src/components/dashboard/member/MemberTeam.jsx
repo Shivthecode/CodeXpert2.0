@@ -1,8 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const MemberTeam = ({ teams = [] }) => {
-  // State to track which team is currently being viewed
+const MemberTeam = () => {
+  const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // 🔴 Sirf Member wali teams fetch karne ki API call
+  const fetchMemberTeams = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('http://localhost:5000/api/teams/member-teams', {
+        method: 'GET',
+        headers: { 'auth-token': token }
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        const formattedTeams = data.map(t => {
+          const leaderId = typeof t.leader === 'object' ? t.leader?._id?.toString() : t.leader?.toString();
+
+          return {
+            id: t._id,
+            name: t.name,
+            leader: t.leader,
+            membersList: t.members.map(m => {
+              const memberId = typeof m === 'object' ? m._id?.toString() : m?.toString();
+              return {
+                id: m._id,
+                name: m.name || 'Developer',
+                email: m.email || '',
+                role: memberId === leaderId ? 'Leader' : 'Member'
+              };
+            })
+          };
+        });
+        setTeams(formattedTeams);
+      }
+    } catch (error) {
+      console.error("Error fetching member teams:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMemberTeams();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-10 text-slate-500 font-medium">Loading your teams...</div>;
+  }
 
   return (
     <div className="bg-white p-4 sm:p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm w-full max-w-4xl mx-auto">
@@ -14,7 +66,7 @@ const MemberTeam = ({ teams = [] }) => {
       {/* Agar koi team nahi hai */}
       {teams.length === 0 ? (
         <div className="text-center py-8 px-4 bg-slate-50 border border-dashed border-slate-200 rounded-xl">
-          <p className="text-slate-500 text-xs sm:text-sm font-medium">You are not assigned to any team yet.</p>
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">You are not assigned to any team yet. Accept a team invite first!</p>
         </div>
       ) : selectedTeam ? (
         
@@ -38,9 +90,12 @@ const MemberTeam = ({ teams = [] }) => {
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Team Roster:</p>
             {selectedTeam.membersList?.map((m, idx) => (
               <div key={idx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-white px-4 py-3 rounded-xl border border-slate-200 text-xs sm:text-sm">
-                <span className="font-medium text-slate-700 break-all">{m.email}</span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 whitespace-nowrap">
-                  {m.role || 'Member'}
+                <div>
+                  <span className="font-bold text-slate-800 block">{m.name}</span>
+                  <span className="text-[10px] text-slate-400">{m.email}</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border whitespace-nowrap ${m.role === 'Leader' ? 'bg-purple-50 text-purple-600 border-purple-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                  {m.role}
                 </span>
               </div>
             ))}
