@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'; // 🔴 1. Socket.io import kiya
 
 const TaskBoard = ({ teams = [] }) => {
   const [tasks, setTasks] = useState([]);
@@ -34,7 +35,18 @@ const TaskBoard = ({ teams = [] }) => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasks(); // Pehli baar fetch karega
+
+    // 🔴 2. Socket connection setup for Leader
+    const socket = io('http://localhost:5000');
+
+    // 🔴 3. Signal aate hi Leader ka dashboard bina refresh kiye wapas data layega
+    socket.on('taskUpdated', () => {
+      fetchTasks();
+    });
+
+    // Cleanup function memory leak rokne ke liye
+    return () => socket.disconnect();
   }, []);
 
   // 2. Leader dwara Task Assign karna

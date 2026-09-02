@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'; // 🔴 1. Socket.io import kiya
 
 const NoticeBoard = ({ teams = [] }) => {
   const [notices, setNotices] = useState([]);
@@ -33,7 +34,18 @@ const NoticeBoard = ({ teams = [] }) => {
   };
 
   useEffect(() => {
-    fetchNotices();
+    fetchNotices(); // Pehli baar fetch karega
+
+    // 🔴 2. Socket connection setup
+    const socket = io('http://localhost:5000');
+
+    // 🔴 3. Signal aate hi Leader ka notice feed bhi bina refresh kiye update ho jayega
+    socket.on('noticeUpdated', () => {
+      fetchNotices();
+    });
+
+    // Cleanup function memory leak rokne ke liye
+    return () => socket.disconnect();
   }, []);
 
   const handlePostNotice = async (e) => {
@@ -53,7 +65,7 @@ const NoticeBoard = ({ teams = [] }) => {
         body: JSON.stringify({
           title: newNoticeTitle,
           message: newNoticeContent,
-          teamId: selectedTeamId, // 🔴 Team ID bhejna zaroori hai
+          teamId: selectedTeamId,
           audience: targetAudience,
           priority: priority
         })

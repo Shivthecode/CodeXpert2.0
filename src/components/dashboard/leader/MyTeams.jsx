@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'; // 🔴 1. Socket.io import kiya
 
 const MyTeams = ({ teams = [], setTeams }) => {
   const [newTeamName, setNewTeamName] = useState('');
@@ -37,7 +38,18 @@ const MyTeams = ({ teams = [], setTeams }) => {
   };
 
   useEffect(() => {
-    fetchMyTeams();
+    fetchMyTeams(); // Pehli baar page load hone par fetch karega
+
+    // 🔴 2. Socket connection setup
+    const socket = io('http://localhost:5000');
+
+    // 🔴 3. Jab koi member invite accept karega ya team update hogi, bina refresh kiye data change hoga
+    socket.on('teamUpdated', () => {
+      fetchMyTeams();
+    });
+
+    // Cleanup function memory leak rokne ke liye
+    return () => socket.disconnect();
   }, []);
 
   // 2. Nayi Team Banane ka function
@@ -94,7 +106,7 @@ const MyTeams = ({ teams = [], setTeams }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // 🔴 Invite bhejte hi turant UI state mein "Pending Approval" status ke sath add kar do
+        // Invite bhejte hi turant UI state mein "Pending Approval" status ke sath add kar do
         setTeams(teams.map(team => {
           if (team.id === teamId) {
             return {
@@ -242,7 +254,7 @@ const MyTeams = ({ teams = [], setTeams }) => {
                                 {m.status}
                               </span>
                               
-                              {/* 🔴 Remove Member Cross Icon (Always Visible if member ID exists) */}
+                              {/* 🔴 Remove Member Cross Icon */}
                               {m.id && (
                                 <button 
                                   onClick={() => handleRemoveMember(t.id, m.id)}

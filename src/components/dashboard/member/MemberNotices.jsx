@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'; // 🔴 Socket.io import kiya
 
 const MemberNotices = () => {
   const [notices, setNotices] = useState([]);
@@ -31,7 +32,18 @@ const MemberNotices = () => {
   };
 
   useEffect(() => {
-    fetchMemberNotices();
+    fetchMemberNotices(); // Pehli baar load hone par fetch karega
+
+    // 🔴 Socket connection setup
+    const socket = io('http://localhost:5000');
+
+    // 🔴 Backend se 'noticeUpdated' signal aate hi bina refresh kiye fetch karega
+    socket.on('noticeUpdated', () => {
+      fetchMemberNotices();
+    });
+
+    // Component unmount hone par connection close
+    return () => socket.disconnect();
   }, []);
 
   const handleMarkAsRead = (id) => {

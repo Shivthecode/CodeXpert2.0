@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'; // 🔴 Socket.io import kiya
 
 const MemberTasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -30,7 +31,18 @@ const MemberTasks = () => {
   };
 
   useEffect(() => {
-    fetchMemberTasks();
+    fetchMemberTasks(); // Pehli baar page load hone par tasks layega
+
+    // 🔴 Socket connection setup
+    const socket = io('http://localhost:5000');
+
+    // 🔴 Backend se 'taskUpdated' ka signal aate hi bina refresh kiye wapas fetch karega
+    socket.on('taskUpdated', () => {
+      fetchMemberTasks();
+    });
+
+    // Component unmount hone par socket connection band kar dega (memory leak rokne ke liye)
+    return () => socket.disconnect();
   }, []);
 
   // 2. Member dwara Task Status update karna (jaise 'in-progress' karna)
