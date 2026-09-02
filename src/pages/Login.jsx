@@ -1,7 +1,6 @@
 import React, { useState } from 'react'; 
 import { Link, useNavigate, Navigate } from 'react-router-dom'; 
 import { useAuth } from '../context/AuthContext';
-// 🔴 NAYI APIs IMPORT KI HAIN YAHAN:
 import { loginUser, forgotPassword, verifyOtp, resetPassword } from '../services/api';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios'; 
@@ -18,7 +17,6 @@ const Login = () => {
   const { login, user } = useAuth(); 
   const navigate = useNavigate();
 
-  // Agar user logged in hai, toh bina render kiye seedha bhej do
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -40,8 +38,8 @@ const Login = () => {
           role: 'member' 
         });
 
-        localStorage.setItem('token', backendRes.data.token);
-        login(backendRes.data.user);
+        // 🔴 Token aur User dono AuthContext ke login function ko diye
+        login(backendRes.data.user, backendRes.data.token);
         navigate('/dashboard', { replace: true });
         
       } catch (error) {
@@ -69,8 +67,9 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await loginUser({ email, password });
-      localStorage.setItem('token', response.data.token);
-      login(response.data.user);
+      
+      // 🔴 Token aur User dono AuthContext ke login function ko diye
+      login(response.data.user, response.data.token);
       navigate('/dashboard', { replace: true });
       
     } catch (err) {
@@ -79,10 +78,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
-  // ==========================================
-  // 🔴 ASLI FORGOT PASSWORD HANDLERS
-  // ==========================================
 
   // Step 1: Send OTP
   const handleSendOtp = async (e) => {
@@ -95,7 +90,7 @@ const Login = () => {
     setLoading(true);
     setMessage('');
     try {
-      await forgotPassword({ email }); // API Call
+      await forgotPassword({ email });
       setMessage(`OTP has been sent to ${email}`);
       setStep('forgot-otp');
     } catch (err) {
@@ -116,7 +111,7 @@ const Login = () => {
     setLoading(true);
     setMessage('');
     try {
-      await verifyOtp({ email, otp }); // API Call
+      await verifyOtp({ email, otp });
       setMessage('');
       setStep('new-password');
     } catch (err) {
@@ -137,7 +132,7 @@ const Login = () => {
     setLoading(true);
     setMessage('');
     try {
-      await resetPassword({ email, newPassword }); // API Call
+      await resetPassword({ email, newPassword });
       alert('Password updated successfully! Please login with your new password.');
       setStep('login');
       setNewPassword('');
@@ -226,17 +221,7 @@ const Login = () => {
                 disabled={loading}
                 className="w-full bg-[var(--color-zoom-blue)] hover:bg-[var(--color-zoom-azure)] text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-1 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
               >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Logging in...
-                  </>
-                ) : (
-                  "Log In"
-                )}
+                {loading ? 'Logging in...' : 'Log In'}
               </button>
             </form>
 

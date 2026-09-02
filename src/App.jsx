@@ -13,7 +13,13 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 
 function ProtectedRoute({ children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Jab tak token verify ho raha hai, loading spinner dikhao
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center font-bold text-slate-600">Loading CodeXpert...</div>;
+  }
+
   return user ? children : <Navigate to="/login" />;
 }
 
@@ -22,14 +28,14 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes (Home, Login, Signup) with Main Navbar & Footer */}
+          {/* Public Routes */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
           </Route>
 
-          {/* Protected Dashboard Routes with Dashboard Navbar & Footer */}
+          {/* Protected Dashboard Routes */}
           <Route 
             element={
               <ProtectedRoute>
